@@ -46,3 +46,6 @@ app.*.map.json
 
 # Connecting code files not needed for version control
 get_data.py
+
+# Secrets and credentials
+/scripts/serviceAccountKey.json
