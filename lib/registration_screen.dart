@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'hostel_data.dart';
+import 'home_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -15,7 +16,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
 
-  String? _gender; // 'Male' or 'Female'
+  String? _gender; 
   String? _hostel;
   bool _isSubmitting = false;
 
@@ -54,10 +55,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       });
 
       if (mounted) {
-        // TODO: navigate to timetable entry screen once it exists
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registered successfully!')),
-        );
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          );
+      
       }
     } catch (e) {
       if (mounted) {
