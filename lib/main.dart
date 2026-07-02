@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'timetable_entry_screen.dart';
 import 'firebase_options.dart';
 import 'registration_screen.dart';
 import 'home_screen.dart';
@@ -72,5 +74,26 @@ class _AuthGateState extends State<AuthGate> {
       );
     }
     return _isRegistered ? const HomeScreen() : const RegistrationScreen();
+  }
+}
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('CampusLoop')),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const TimetableEntryScreen()),
+            );
+          },
+          child: const Text('My Timetable'),
+        ),
+      ),
+    );
   }
 }
