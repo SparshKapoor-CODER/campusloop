@@ -41,16 +41,20 @@ class _TimetableEntryScreenState extends State<TimetableEntryScreen> {
     });
   }
 
-  Future<void> _openSlotForm(TimeSlot slot) async {
-    final existing = _filledSlots[slot.code];
+  // ---------- Add Subject flow (subject/faculty/building/room once, then pick slots) ----------
+  Future<void> _openAddSubjectForm({String? preSelectedSlotCode}) async {
+    final subjectController = TextEditingController();
+    final facultyController = TextEditingController();
+    final roomController = TextEditingController();
+    String? building;
+    final Set<String> selectedSlotCodes = {};
+    if (preSelectedSlotCode != null) {
+      selectedSlotCodes.add(preSelectedSlotCode);
+    }
 
-    final subjectController =
-        TextEditingController(text: existing?['subject'] ?? '');
-    final facultyController =
-        TextEditingController(text: existing?['faculty'] ?? '');
-    final roomController =
-        TextEditingController(text: existing?['roomNumber'] ?? '');
-    String? building = existing?['building'];
+    // Only free (unoccupied) slots are selectable.
+    final freeSlots =
+        allSlots.where((s) => !_filledSlots.containsKey(s.code)).toList();
 
     await showModalBottomSheet(
       context: context,
@@ -65,15 +69,14 @@ class _TimetableEntryScreenState extends State<TimetableEntryScreen> {
           ),
           child: StatefulBuilder(
             builder: (context, setModalState) {
-              return SingleChildScrollView(
+              return SizedBox(
+                height: MediaQuery.of(context).size.height * 0.85,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      '${slot.code} — ${slot.day} ${slot.startTime}-${slot.endTime}',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
+                    Text('Add Subject',
+                        style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 16),
                     TextField(
                       controller: subjectController,
@@ -99,39 +102,85 @@ class _TimetableEntryScreenState extends State<TimetableEntryScreen> {
                       decoration:
                           const InputDecoration(labelText: 'Room Number'),
                     ),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        if (existing != null)
-                          TextButton(
-                            onPressed: () async {
-                              await _deleteSlot(slot.code);
-                              if (context.mounted) Navigator.pop(context);
-                            },
-                            child: const Text('Delete',
-                                style: TextStyle(color: Colors.red)),
-                          ),
-                        const Spacer(),
-                        ElevatedButton(
-                          onPressed: () async {
-                            if (subjectController.text.trim().isEmpty ||
-                                facultyController.text.trim().isEmpty ||
-                                building == null ||
-                                roomController.text.trim().isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text('Fill all fields')),
-                              );
-                              return;
-                            }
-                            await _saveSlot(slot, subjectController.text.trim(),
-                                facultyController.text.trim(), building!,
-                                roomController.text.trim());
-                            if (context.mounted) Navigator.pop(context);
-                          },
-                          child: const Text('Save'),
-                        ),
-                      ],
+                    const SizedBox(height: 16),
+                    Text('Add Slots',
+                        style: Theme.of(context).textTheme.titleSmall),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Only free slots are shown — slots already occupied by other subjects are hidden.',
+                      style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: freeSlots.isEmpty
+                          ? const Center(child: Text('No free slots left.'))
+                          : ListView(
+                              children: [
+                                for (final day in weekDays)
+                                  if (freeSlots.any((s) => s.day == day)) ...[
+                                    Padding(
+                                      padding:
+                                          const EdgeInsets.only(top: 8.0, bottom: 2),
+                                      child: Text(day,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold)),
+                                    ),
+                                    for (final slot in freeSlots
+                                        .where((s) => s.day == day))
+                                      CheckboxListTile(
+                                        dense: true,
+                                        contentPadding: EdgeInsets.zero,
+                                        title: Text(
+                                            '${slot.code}  (${slot.startTime}-${slot.endTime})'),
+                                        value: selectedSlotCodes
+                                            .contains(slot.code),
+                                        onChanged: (checked) {
+                                          setModalState(() {
+                                            if (checked == true) {
+                                              selectedSlotCodes.add(slot.code);
+                                            } else {
+                                              selectedSlotCodes
+                                                  .remove(slot.code);
+                                            }
+                                          });
+                                        },
+                                      ),
+                                  ],
+                              ],
+                            ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (subjectController.text.trim().isEmpty ||
+                              facultyController.text.trim().isEmpty ||
+                              building == null ||
+                              roomController.text.trim().isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Fill all fields')),
+                            );
+                            return;
+                          }
+                          if (selectedSlotCodes.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Select at least one slot')),
+                            );
+                            return;
+                          }
+                          await _saveSubjectToSlots(
+                            selectedSlotCodes,
+                            subjectController.text.trim(),
+                            facultyController.text.trim(),
+                            building!,
+                            roomController.text.trim(),
+                          );
+                          if (context.mounted) Navigator.pop(context);
+                        },
+                        child: const Text('Save'),
+                      ),
                     ),
                   ],
                 ),
@@ -143,27 +192,75 @@ class _TimetableEntryScreenState extends State<TimetableEntryScreen> {
     );
   }
 
-  Future<void> _saveSlot(TimeSlot slot, String subject, String faculty,
-      String building, String room) async {
-    final data = {
-      'slotCode': slot.code,
-      'day': slot.day,
-      'startTime': slot.startTime,
-      'endTime': slot.endTime,
-      'subject': subject,
-      'faculty': faculty,
-      'building': building,
-      'roomNumber': room,
-    };
-
-    await FirebaseFirestore.instance
+  Future<void> _saveSubjectToSlots(Set<String> slotCodes, String subject,
+      String faculty, String building, String room) async {
+    final batch = FirebaseFirestore.instance.batch();
+    final collectionRef = FirebaseFirestore.instance
         .collection('students')
         .doc(_uid)
-        .collection('timetable')
-        .doc(slot.code)
-        .set(data);
+        .collection('timetable');
 
-    setState(() => _filledSlots[slot.code] = data);
+    final Map<String, Map<String, dynamic>> newData = {};
+
+    for (final code in slotCodes) {
+      final slot = allSlots.firstWhere((s) => s.code == code);
+      final data = {
+        'slotCode': slot.code,
+        'day': slot.day,
+        'startTime': slot.startTime,
+        'endTime': slot.endTime,
+        'subject': subject,
+        'faculty': faculty,
+        'building': building,
+        'roomNumber': room,
+      };
+      batch.set(collectionRef.doc(slot.code), data);
+      newData[slot.code] = data;
+    }
+
+    await batch.commit();
+
+    setState(() => _filledSlots.addAll(newData));
+  }
+
+  // ---------- View / delete a filled slot ----------
+  Future<void> _openFilledSlotDetails(TimeSlot slot) async {
+    final data = _filledSlots[slot.code]!;
+
+    await showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${slot.code} — ${slot.day} ${slot.startTime}-${slot.endTime}',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 12),
+              Text('Subject: ${data['subject']}'),
+              Text('Faculty: ${data['faculty']}'),
+              Text('Building: ${data['building']}'),
+              Text('Room: ${data['roomNumber']}'),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () async {
+                    await _deleteSlot(slot.code);
+                    if (context.mounted) Navigator.pop(context);
+                  },
+                  child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _deleteSlot(String slotCode) async {
@@ -185,6 +282,11 @@ class _TimetableEntryScreenState extends State<TimetableEntryScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('My Timetable')),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _openAddSubjectForm(),
+        icon: const Icon(Icons.add),
+        label: const Text('Add Subject'),
+      ),
       body: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: SingleChildScrollView(
@@ -225,7 +327,13 @@ class _TimetableEntryScreenState extends State<TimetableEntryScreen> {
     final filled = _filledSlots[slot.code];
 
     return InkWell(
-      onTap: () => _openSlotForm(slot),
+      onTap: () {
+        if (filled != null) {
+          _openFilledSlotDetails(slot);
+        } else {
+          _openAddSubjectForm(preSelectedSlotCode: slot.code);
+        }
+      },
       child: Container(
         height: 70,
         padding: const EdgeInsets.all(4),
