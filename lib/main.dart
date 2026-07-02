@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
 import 'registration_screen.dart';
+import 'home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,28 +38,39 @@ class AuthGate extends StatefulWidget {
 }
 
 class _AuthGateState extends State<AuthGate> {
+  bool _checking = true;
+  bool _isRegistered = false;
+
   @override
   void initState() {
     super.initState();
-    _signInAnonymously();
+    _init();
   }
 
-  Future<void> _signInAnonymously() async {
+  Future<void> _init() async {
     if (FirebaseAuth.instance.currentUser == null) {
       await FirebaseAuth.instance.signInAnonymously();
     }
-    setState(() {}); // rebuild once signed in
+
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final doc = await FirebaseFirestore.instance
+        .collection('students')
+        .doc(uid)
+        .get();
+
+    setState(() {
+      _isRegistered = doc.exists;
+      _checking = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (FirebaseAuth.instance.currentUser == null) {
+    if (_checking) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
-    // For now, always go to registration.
-    // Later: check Firestore for existing student doc and skip if found.
-    return const RegistrationScreen();
+    return _isRegistered ? const HomeScreen() : const RegistrationScreen();
   }
 }
