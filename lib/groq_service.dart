@@ -32,13 +32,7 @@ class GroqService {
     buffer.writeln('Current time: ${_formatTime(now)}');
 
     final weekdayIndex = now.weekday; // Mon=1..Sun=7
-    if (weekdayIndex == 7) {
-      buffer.writeln('Today is Sunday — no classes.');
-      return buffer.toString();
-    }
-
-    final dayName = _weekDays[weekdayIndex - 1];
-    buffer.writeln('Today is $dayName.');
+    final isSunday = weekdayIndex == 7;
 
     final studentDoc =
         await FirebaseFirestore.instance.collection('students').doc(_uid).get();
@@ -46,35 +40,42 @@ class GroqService {
     final hostelBlock = studentData['hostelBlock'] as String?;
     buffer.writeln('Student hostel: ${hostelBlock ?? 'unknown'}');
 
-    final cancelDoc = await FirebaseFirestore.instance
-        .collection('students')
-        .doc(_uid)
-        .collection('cancellations')
-        .doc(_dateKey(now))
-        .get();
-    final cancelledCodes = <String>{
-      ...?((cancelDoc.data()?['slotCodes'] as List?)?.cast<String>())
-    };
-
-    final timetableSnap = await FirebaseFirestore.instance
-        .collection('students')
-        .doc(_uid)
-        .collection('timetable')
-        .where('day', isEqualTo: dayName)
-        .get();
-
-    final slots = timetableSnap.docs.map((d) => d.data()).toList()
-      ..sort((a, b) => (a['startTime'] as String).compareTo(b['startTime'] as String));
-
-    if (slots.isEmpty) {
-      buffer.writeln('No classes scheduled today.');
+    if (isSunday) {
+      buffer.writeln('Today is Sunday — no classes.');
     } else {
-      buffer.writeln("Today's schedule:");
-      for (final s in slots) {
-        final cancelled =
-            cancelledCodes.contains(s['slotCode']) ? ' [CANCELLED]' : '';
-        buffer.writeln(
-            '- ${s['startTime']}-${s['endTime']}: ${s['subject']} with ${s['faculty']} at ${s['building']} room ${s['roomNumber']}$cancelled');
+      final dayName = _weekDays[weekdayIndex - 1];
+      buffer.writeln('Today is $dayName.');
+
+      final cancelDoc = await FirebaseFirestore.instance
+          .collection('students')
+          .doc(_uid)
+          .collection('cancellations')
+          .doc(_dateKey(now))
+          .get();
+      final cancelledCodes = <String>{
+        ...?((cancelDoc.data()?['slotCodes'] as List?)?.cast<String>())
+      };
+
+      final timetableSnap = await FirebaseFirestore.instance
+          .collection('students')
+          .doc(_uid)
+          .collection('timetable')
+          .where('day', isEqualTo: dayName)
+          .get();
+
+      final slots = timetableSnap.docs.map((d) => d.data()).toList()
+        ..sort((a, b) => (a['startTime'] as String).compareTo(b['startTime'] as String));
+
+      if (slots.isEmpty) {
+        buffer.writeln('No classes scheduled today.');
+      } else {
+        buffer.writeln("Today's schedule:");
+        for (final s in slots) {
+          final cancelled =
+              cancelledCodes.contains(s['slotCode']) ? ' [CANCELLED]' : '';
+          buffer.writeln(
+              '- ${s['startTime']}-${s['endTime']}: ${s['subject']} with ${s['faculty']} at ${s['building']} room ${s['roomNumber']}$cancelled');
+        }
       }
     }
 
@@ -104,6 +105,33 @@ class GroqService {
           if (entry.key == hostelId) continue;
           buffer.writeln('- to ${entry.key.replaceAll('_', ' ')}: ${entry.value} min');
         }
+      }
+    }
+
+    // Tomorrow's first class — needed for the model to answer sleep/wake-up
+    // questions with a real anchor time instead of guessing. Computed
+    // regardless of whether today is Sunday, so Sunday-night questions work too.
+    final tomorrowWeekdayIndex = (weekdayIndex % 7) + 1; // wraps Sun(7)->Mon(1)
+    if (tomorrowWeekdayIndex == 7) {
+      buffer.writeln('Tomorrow is Sunday — no classes.');
+    } else {
+      final tomorrowDayName = _weekDays[tomorrowWeekdayIndex - 1];
+      final tomorrowSnap = await FirebaseFirestore.instance
+          .collection('students')
+          .doc(_uid)
+          .collection('timetable')
+          .where('day', isEqualTo: tomorrowDayName)
+          .get();
+
+      final tomorrowSlots = tomorrowSnap.docs.map((d) => d.data()).toList()
+        ..sort((a, b) => (a['startTime'] as String).compareTo(b['startTime'] as String));
+
+      if (tomorrowSlots.isEmpty) {
+        buffer.writeln('Tomorrow ($tomorrowDayName) has no classes scheduled.');
+      } else {
+        final first = tomorrowSlots.first;
+        buffer.writeln(
+            "Tomorrow ($tomorrowDayName)'s first class: ${first['startTime']} — ${first['subject']} at ${first['building']} room ${first['roomNumber']}.");
       }
     }
 
