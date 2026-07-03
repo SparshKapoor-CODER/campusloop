@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'timetable_entry_screen.dart';
 import 'chat_screen.dart';
 import 'recommendation_engine.dart';
+import 'theme.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -300,11 +301,14 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_noClassesToday) {
       return ListView(
         padding: const EdgeInsets.all(20),
-        children: const [
-          SizedBox(height: 80),
-          Icon(Icons.weekend, size: 48, color: Colors.grey),
-          SizedBox(height: 12),
-          Center(child: Text('No classes today.', style: TextStyle(fontSize: 16))),
+        children: [
+          const SizedBox(height: 80),
+          const Icon(Icons.weekend, size: 48, color: AppColors.textSecondary),
+          const SizedBox(height: 12),
+          Center(
+            child: Text('No classes today.',
+                style: AppTheme.mono(fontSize: 16, color: AppColors.textSecondary)),
+          ),
         ],
       );
     }
@@ -313,12 +317,18 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.all(16),
       children: [
         _buildTopCard(),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         if (_recommendation != null) _buildRecommendationCard(),
         const SizedBox(height: 20),
-        ExpansionTile(
-          title: const Text("Today's full schedule"),
-          children: _todaySlotsWithCancelledIncluded(),
+        Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            title: Text("Today's full schedule",
+                style: AppTheme.mono(fontSize: 13, fontWeight: FontWeight.bold)),
+            collapsedIconColor: AppColors.textSecondary,
+            iconColor: AppColors.accent,
+            children: _todaySlotsWithCancelledIncluded(),
+          ),
         ),
       ],
     );
@@ -326,56 +336,62 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildTopCard() {
     if (_doneForDay) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            children: const [
-              Icon(Icons.check_circle, color: Colors.green),
-              SizedBox(width: 12),
-              Expanded(child: Text("You're done for the day!")),
-            ],
-          ),
+      return AccentBarCard(
+        barColor: AppColors.recHostel,
+        child: Row(
+          children: [
+            const Icon(Icons.check_circle, color: AppColors.recHostel),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text("You're done for the day!",
+                  style: AppTheme.mono(fontSize: 15, fontWeight: FontWeight.bold)),
+            ),
+          ],
         ),
       );
     }
 
     if (_inClassNow != null) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('In class right now', style: TextStyle(color: Colors.grey, fontSize: 12)),
-              const SizedBox(height: 4),
-              Text(_inClassNow!['subject'], style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              Text('${_inClassNow!['building']} • Room ${_inClassNow!['roomNumber']} • ${_inClassNow!['faculty']}'),
-              Text('Until ${_inClassNow!['endTime']}'),
-              if (_nextSlot != null) ...[
-                const Divider(height: 24),
-                Text('Up next: ${_nextSlot!['subject']} at ${_nextSlot!['startTime']}'),
-              ],
+      return AccentBarCard(
+        barColor: AppColors.accent,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('IN CLASS RIGHT NOW',
+                style: AppTheme.mono(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 6),
+            Text(_inClassNow!['subject'],
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            Text('${_inClassNow!['building']} • Room ${_inClassNow!['roomNumber']} • ${_inClassNow!['faculty']}',
+                style: const TextStyle(color: AppColors.textSecondary)),
+            Text('Until ${_inClassNow!['endTime']}', style: AppTheme.mono(fontSize: 13)),
+            if (_nextSlot != null) ...[
+              const Divider(height: 24),
+              Text('Up next: ${_nextSlot!['subject']} at ${_nextSlot!['startTime']}',
+                  style: AppTheme.mono(fontSize: 12, color: AppColors.textSecondary)),
             ],
-          ),
+          ],
         ),
       );
     }
 
     if (_nextSlot != null) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Next class', style: TextStyle(color: Colors.grey, fontSize: 12)),
-              const SizedBox(height: 4),
-              Text(_nextSlot!['subject'], style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              Text('${_nextSlot!['building']} • Room ${_nextSlot!['roomNumber']} • ${_nextSlot!['faculty']}'),
-              Text('Starts at ${_nextSlot!['startTime']}'),
-            ],
-          ),
+      return AccentBarCard(
+        barColor: AppColors.accent,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('NEXT CLASS',
+                style: AppTheme.mono(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 6),
+            Text(_nextSlot!['subject'],
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            Text('${_nextSlot!['building']} • Room ${_nextSlot!['roomNumber']} • ${_nextSlot!['faculty']}',
+                style: const TextStyle(color: AppColors.textSecondary)),
+            Text('Starts at ${_nextSlot!['startTime']}', style: AppTheme.mono(fontSize: 13)),
+          ],
         ),
       );
     }
@@ -389,33 +405,30 @@ class _HomeScreenState extends State<HomeScreen> {
     IconData icon;
     switch (rec.type) {
       case 'hostel':
-        color = Colors.green.shade100;
-        icon = Icons.home;
+        color = AppColors.recHostel;
+        icon = Icons.home_rounded;
         break;
       case 'canteen':
-        color = Colors.orange.shade100;
-        icon = Icons.restaurant;
+        color = AppColors.recCanteen;
+        icon = Icons.restaurant_rounded;
         break;
       case 'at_hostel':
-        color = Colors.blue.shade100;
-        icon = Icons.info;
+        color = AppColors.recInfo;
+        icon = Icons.info_rounded;
         break;
       default:
-        color = Colors.grey.shade200;
-        icon = Icons.timer;
+        color = AppColors.recStay;
+        icon = Icons.timer_rounded;
     }
 
-    return Card(
-      color: color,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Icon(icon),
-            const SizedBox(width: 12),
-            Expanded(child: Text(rec.message)),
-          ],
-        ),
+    return AccentBarCard(
+      barColor: color,
+      child: Row(
+        children: [
+          Icon(icon, color: color),
+          const SizedBox(width: 12),
+          Expanded(child: Text(rec.message)),
+        ],
       ),
     );
   }
@@ -427,9 +440,12 @@ class _HomeScreenState extends State<HomeScreen> {
       return ListTile(
         title: Text(
           '${slot['subject']}  (${slot['startTime']}-${slot['endTime']})',
-          style: isCancelled ? const TextStyle(decoration: TextDecoration.lineThrough) : null,
+          style: isCancelled
+              ? const TextStyle(decoration: TextDecoration.lineThrough, color: AppColors.textSecondary)
+              : null,
         ),
-        subtitle: Text('${slot['building']} • Room ${slot['roomNumber']} • ${slot['faculty']}'),
+        subtitle: Text('${slot['building']} • Room ${slot['roomNumber']} • ${slot['faculty']}',
+            style: const TextStyle(color: AppColors.textSecondary)),
         trailing: Switch(
           value: !isCancelled,
           onChanged: (val) => _toggleCancelled(code, !val),

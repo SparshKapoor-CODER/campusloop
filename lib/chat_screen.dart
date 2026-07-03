@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'groq_service.dart';
+import 'theme.dart';
 
 class ChatMessage {
   final String role; // 'user' or 'assistant'
@@ -113,8 +114,8 @@ class _ChatScreenState extends State<ChatScreen> {
                         BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
                     decoration: BoxDecoration(
                       color: isUser
-                          ? Theme.of(context).colorScheme.primaryContainer
-                          : Colors.grey.shade200,
+                          ? AppColors.accent.withValues(alpha: 0.85)
+                          : AppColors.surfaceHigh,
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Text(msg.text),

@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'slot_data.dart';
 import 'campus_data.dart';
+import 'theme.dart';
 
 class TimetableEntryScreen extends StatefulWidget {
   const TimetableEntryScreen({super.key});
@@ -108,7 +109,7 @@ class _TimetableEntryScreenState extends State<TimetableEntryScreen> {
                     const SizedBox(height: 4),
                     Text(
                       'Only free slots are shown — slots already occupied by other subjects are hidden.',
-                      style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                      style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
                     ),
                     const SizedBox(height: 8),
                     Expanded(
@@ -292,10 +293,10 @@ class _TimetableEntryScreenState extends State<TimetableEntryScreen> {
         child: SingleChildScrollView(
           child: Table(
             defaultColumnWidth: const FixedColumnWidth(110),
-            border: TableBorder.all(color: Colors.grey.shade300),
+            border: TableBorder.all(color: AppColors.divider),
             children: [
               TableRow(
-                decoration: BoxDecoration(color: Colors.deepPurple.shade50),
+                decoration: BoxDecoration(color: AppColors.surfaceHigh),
                 children: [
                   const _HeaderCell('Day'),
                   for (int col = 1; col <= 7; col++)
@@ -337,7 +338,7 @@ class _TimetableEntryScreenState extends State<TimetableEntryScreen> {
       child: Container(
         height: 70,
         padding: const EdgeInsets.all(4),
-        color: filled != null ? Colors.deepPurple.shade100 : null,
+        color: filled != null ? AppColors.accent.withValues(alpha: 0.18) : null,
         child: filled != null
             ? Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -355,7 +356,7 @@ class _TimetableEntryScreenState extends State<TimetableEntryScreen> {
               )
             : Center(
                 child: Text(slot.code,
-                    style: TextStyle(color: Colors.grey.shade400, fontSize: 11)),
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
               ),
       ),
     );
