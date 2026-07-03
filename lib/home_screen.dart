@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'timetable_entry_screen.dart';
+import 'chat_screen.dart';
 import 'recommendation_engine.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -264,6 +265,15 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('CampusLoop'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.chat_bubble_outline),
+            tooltip: 'Ask CampusLoop',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ChatScreen()),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.calendar_month),
             tooltip: 'My Timetable',
