@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'timetable_entry_screen.dart';
 import 'chat_screen.dart';
+import 'profile_screen.dart';
 import 'recommendation_engine.dart';
 import 'theme.dart';
 
@@ -281,6 +282,15 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const TimetableEntryScreen()),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.person_outline),
+            tooltip: 'Profile',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
               );
             },
           ),
