@@ -49,3 +49,4 @@ get_data.py
 
 # Secrets and credentials
 /scripts/serviceAccountKey.json
+/lib/groq_config.dart
