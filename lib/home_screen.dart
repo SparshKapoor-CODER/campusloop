@@ -51,6 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _loading = true;
       _error = null;
+      _noClassesToday = false;
     });
 
     try {
@@ -227,6 +228,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _previousSlot = previousSlot;
         _recommendation = recommendation;
         _doneForDay = doneForDay;
+        _noClassesToday = false;
         _loading = false;
       });
     } catch (e) {
