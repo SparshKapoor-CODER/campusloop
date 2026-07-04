@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'groq_service.dart';
 import 'theme.dart';
 
@@ -111,14 +112,39 @@ class _ChatScreenState extends State<ChatScreen> {
                     margin: const EdgeInsets.symmetric(vertical: 4),
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     constraints:
-                        BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+                        BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.78),
                     decoration: BoxDecoration(
                       color: isUser
                           ? AppColors.accent.withValues(alpha: 0.85)
                           : AppColors.surfaceHigh,
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.only(
+                        topLeft: const Radius.circular(14),
+                        topRight: const Radius.circular(14),
+                        bottomLeft: Radius.circular(isUser ? 14 : 4),
+                        bottomRight: Radius.circular(isUser ? 4 : 14),
+                      ),
                     ),
-                    child: Text(msg.text),
+                    child: isUser
+                        ? Text(msg.text, style: const TextStyle(color: Colors.white))
+                        : MarkdownBody(
+                            data: msg.text,
+                            selectable: true,
+                            styleSheet: MarkdownStyleSheet(
+                              p: const TextStyle(color: AppColors.textPrimary, fontSize: 14, height: 1.4),
+                              strong: const TextStyle(
+                                  color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+                              em: const TextStyle(
+                                  color: AppColors.textPrimary, fontStyle: FontStyle.italic),
+                              listBullet: const TextStyle(color: AppColors.textPrimary),
+                              code: AppTheme.mono(
+                                  fontSize: 13, color: AppColors.accent),
+                              codeblockDecoration: BoxDecoration(
+                                color: AppColors.background,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              blockSpacing: 8,
+                            ),
+                          ),
                   ),
                 );
               },
