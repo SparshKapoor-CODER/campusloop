@@ -2,11 +2,13 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'groq_config.dart';
 
 class GroqService {
+  // Calls our own Cloudflare Worker proxy, not Groq directly — the Worker
+  // holds the real Groq key server-side and verifies the caller's Firebase
+  // session before forwarding anything, so no API key ever ships in the app.
   static const String _endpoint =
-      'https://api.groq.com/openai/v1/chat/completions';
+      'https://campusloop-groq-proxy.campusloopvit.workers.dev';
   static const String _model = 'llama-3.3-70b-versatile';
 
   static const List<String> _weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -195,11 +197,18 @@ $context
       {'role': 'user', 'content': userMessage},
     ];
 
+    // Firebase ID token proves this is a real, currently signed-in
+    // CampusLoop user — the Worker checks this before spending Groq quota.
+    final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
+    if (idToken == null) {
+      throw Exception('Not signed in');
+    }
+
     final response = await http.post(
       Uri.parse(_endpoint),
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $groqApiKey',
+        'Authorization': 'Bearer $idToken',
       },
       body: jsonEncode({
         'model': _model,
@@ -209,7 +218,7 @@ $context
     );
 
     if (response.statusCode != 200) {
-      throw Exception('Groq API error ${response.statusCode}: ${response.body}');
+      throw Exception('Chat service error ${response.statusCode}: ${response.body}');
     }
 
     final data = jsonDecode(response.body);
