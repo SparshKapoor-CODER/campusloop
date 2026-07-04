@@ -87,4 +87,4 @@ The FFCS timetable slot-grid concept is adapted from [FFCS-VITB-Maker](https://g
 
 ---
 
-Made by **Sparsh Kapoor** — [LinkedIn](https://www.linkedin.com/in/sparsh-kapoor-sk/)
+Made by [**Sparsh Kapoor**](https://github.com/SparshKapoor-CODER)— [LinkedIn](https://www.linkedin.com/in/sparsh-kapoor-sk/)
