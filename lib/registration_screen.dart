@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
 import 'hostel_data.dart';
 import 'home_screen.dart';
 import 'theme.dart';
@@ -19,12 +21,27 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   String? _gender;
   String? _hostel;
+  String? _photoBase64;
   bool _isSubmitting = false;
 
   List<String> get _hostelOptions {
     if (_gender == 'Male') return boysHostels;
     if (_gender == 'Female') return girlsHostels;
     return [];
+  }
+
+  Future<void> _pickPhoto() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 400,
+      maxHeight: 400,
+      imageQuality: 70,
+    );
+    if (picked == null) return;
+
+    final bytes = await picked.readAsBytes();
+    setState(() => _photoBase64 = base64Encode(bytes));
   }
 
   Future<void> _submit() async {
@@ -50,6 +67,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         'gender': _gender,
         'hostelBlock': _hostel,
         'createdAt': FieldValue.serverTimestamp(),
+        if (_photoBase64 != null) 'photoBase64': _photoBase64,
       });
 
       if (mounted) {
@@ -85,7 +103,39 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 const SizedBox(height: 4),
                 Text("Let's get you set up.",
                     style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
+                Center(
+                  child: GestureDetector(
+                    onTap: _pickPhoto,
+                    child: Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 48,
+                          backgroundColor: AppColors.surfaceHigh,
+                          backgroundImage: _photoBase64 != null
+                              ? MemoryImage(base64Decode(_photoBase64!))
+                              : null,
+                          child: _photoBase64 == null
+                              ? const Icon(Icons.person, size: 48, color: AppColors.textSecondary)
+                              : null,
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: const BoxDecoration(
+                              color: AppColors.accent,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.camera_alt, size: 14, color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
                 TextFormField(
                   controller: _firstNameController,
                   decoration: const InputDecoration(labelText: 'First Name'),
