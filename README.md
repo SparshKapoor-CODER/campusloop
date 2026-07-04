@@ -1,3 +1,9 @@
+<p align="center">
+  <img src="assets/icon.png" width="300" />
+</p>
+
+
+
 # CampusLoop
 
 A location- and time-aware campus companion app for VIT Bhopal students, built in Flutter.
