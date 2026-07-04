@@ -44,21 +44,33 @@ class _TimetableEntryScreenState extends State<TimetableEntryScreen> {
   }
 
   Future<void> _loadTimetable() async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('students')
-        .doc(_uid)
-        .collection('timetable')
-        .get();
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('students')
+          .doc(_uid)
+          .collection('timetable')
+          .get();
 
-    final map = <String, Map<String, dynamic>>{};
-    for (final doc in snapshot.docs) {
-      map[doc.id] = doc.data();
+      final map = <String, Map<String, dynamic>>{};
+      for (final doc in snapshot.docs) {
+        map[doc.id] = doc.data();
+      }
+
+      setState(() {
+        _filledSlots = map;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _loading = false;
+      });
+      // Optionally show an error snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load timetable: $e')),
+        );
+      }
     }
-
-    setState(() {
-      _filledSlots = map;
-      _loading = false;
-    });
   }
 
   List<SubjectGroup> _buildSubjectGroups() {
@@ -83,7 +95,7 @@ class _TimetableEntryScreenState extends State<TimetableEntryScreen> {
     return list;
   }
 
-  // ---------- Add Subject flow (new subject, subject/faculty/building/room once, then pick slots) ----------
+  // ---------- Add Subject flow ----------
   Future<void> _openAddSubjectForm({String? preSelectedSlotCode}) async {
     final subjectController = TextEditingController();
     final facultyController = TextEditingController();
@@ -477,12 +489,20 @@ class _TimetableEntryScreenState extends State<TimetableEntryScreen> {
           ),
         ],
       ),
+      // ------------- ADDED THIS LINE TO ENSURE FAB IS VISIBLE -------------
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openAddSubjectForm(),
         icon: const Icon(Icons.add),
         label: const Text('Add Subject'),
       ),
-      bottomNavigationBar: const SafeArea(child: MadeByCredit()),
+      // ------------- bottomNavigationBar with fixed height -------------
+      bottomNavigationBar: const SafeArea(
+        child: SizedBox(
+          height: 40, // Ensures the credit fits without overlapping the FAB
+          child: MadeByCredit(),
+        ),
+      ),
       body: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: SingleChildScrollView(
