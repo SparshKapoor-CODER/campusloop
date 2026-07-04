@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -21,6 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _error;
 
   String? _hostelId;
+  String? _photoBase64;
   List<Map<String, dynamic>> _todaySlots = []; // sorted, non-cancelled
   List<Map<String, dynamic>> _allTodaySlots = []; // sorted, includes cancelled
   Set<String> _cancelledCodes = {};
@@ -78,6 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
           .get();
       final hostelBlock = studentDoc.data()?['hostelBlock'] as String?;
       final hostelId = hostelBlock != null ? _locId(hostelBlock) : null;
+      final photoBase64 = studentDoc.data()?['photoBase64'] as String?;
 
       // ---- today's cancellations ----
       final cancelDoc = await FirebaseFirestore.instance
@@ -108,6 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (allTodaySlots.isEmpty) {
         setState(() {
           _hostelId = hostelId;
+          _photoBase64 = photoBase64;
           _cancelledCodes = cancelledCodes;
           _allTodaySlots = allTodaySlots;
           _noClassesToday = true;
@@ -223,6 +227,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
       setState(() {
         _hostelId = hostelId;
+        _photoBase64 = photoBase64;
         _todaySlots = todaySlots;
         _allTodaySlots = allTodaySlots;
         _cancelledCodes = cancelledCodes;
@@ -286,12 +291,23 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.person_outline),
+            icon: CircleAvatar(
+              radius: 14,
+              backgroundColor: AppColors.surfaceHigh,
+              backgroundImage:
+                  _photoBase64 != null ? MemoryImage(base64Decode(_photoBase64!)) : null,
+              child: _photoBase64 == null
+                  ? const Icon(Icons.person_outline, size: 18, color: AppColors.textSecondary)
+                  : null,
+            ),
             tooltip: 'Profile',
-            onPressed: () {
-              Navigator.of(context).push(
+            onPressed: () async {
+              await Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const ProfileScreen()),
               );
+              // Photo or hostel may have changed — refresh so the avatar and
+              // recommendation logic reflect the latest data.
+              _loadEverything();
             },
           ),
         ],
