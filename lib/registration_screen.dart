@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'hostel_data.dart';
 import 'home_screen.dart';
 import 'theme.dart';
+import 'made_by_credit.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -185,6 +186,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           child: const Text('Continue'),
                         ),
                       ),
+                const MadeByCredit(),
               ],
             ),
           ),

@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'slot_data.dart';
 import 'campus_data.dart';
 import 'theme.dart';
+import 'made_by_credit.dart';
 
 class SubjectGroup {
   final String subject;
@@ -481,6 +482,7 @@ class _TimetableEntryScreenState extends State<TimetableEntryScreen> {
         icon: const Icon(Icons.add),
         label: const Text('Add Subject'),
       ),
+      bottomNavigationBar: const SafeArea(child: MadeByCredit()),
       body: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: SingleChildScrollView(
@@ -613,11 +615,13 @@ class _ViewSubjectsScreen extends StatelessWidget {
                 );
               },
             ),
-      bottomNavigationBar: groups.isEmpty
-          ? null
-          : SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
+      bottomNavigationBar: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (groups.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                 child: TextButton(
                   onPressed: () async {
                     final confirm = await showDialog<bool>(
@@ -644,7 +648,10 @@ class _ViewSubjectsScreen extends StatelessWidget {
                   child: const Text('Delete Entire Timetable', style: TextStyle(color: Colors.red)),
                 ),
               ),
-            ),
+            const MadeByCredit(),
+          ],
+        ),
+      ),
     );
   }
 }

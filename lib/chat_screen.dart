@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'groq_service.dart';
 import 'theme.dart';
+import 'made_by_credit.dart';
 
 class ChatMessage {
   final String role; // 'user' or 'assistant'
@@ -153,24 +154,30 @@ class _ChatScreenState extends State<ChatScreen> {
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Row(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      decoration: const InputDecoration(
-                        hintText: 'Ask something...',
-                        border: OutlineInputBorder(),
-                        isDense: true,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _controller,
+                          decoration: const InputDecoration(
+                            hintText: 'Ask something...',
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                          ),
+                          onSubmitted: _send,
+                        ),
                       ),
-                      onSubmitted: _send,
-                    ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.send),
+                        onPressed: _sending ? null : () => _send(_controller.text),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.send),
-                    onPressed: _sending ? null : () => _send(_controller.text),
-                  ),
+                  const MadeByCredit(),
                 ],
               ),
             ),

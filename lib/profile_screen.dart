@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'hostel_data.dart';
 import 'timetable_entry_screen.dart';
 import 'theme.dart';
+import 'made_by_credit.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -207,6 +208,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
+          const SizedBox(height: 24),
+          const MadeByCredit(),
         ],
       ),
     );

@@ -7,6 +7,7 @@ import 'chat_screen.dart';
 import 'profile_screen.dart';
 import 'recommendation_engine.dart';
 import 'theme.dart';
+import 'made_by_credit.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -335,6 +336,8 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Text('No classes today.',
                 style: AppTheme.mono(fontSize: 16, color: AppColors.textSecondary)),
           ),
+          const SizedBox(height: 40),
+          const MadeByCredit(),
         ],
       );
     }
@@ -356,6 +359,8 @@ class _HomeScreenState extends State<HomeScreen> {
             children: _todaySlotsWithCancelledIncluded(),
           ),
         ),
+        const SizedBox(height: 20),
+        const MadeByCredit(),
       ],
     );
   }
