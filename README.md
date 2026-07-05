@@ -33,7 +33,7 @@ CampusLoop knows your FFCS timetable, the walking distance between every buildin
   - Too tight — **stay put**. ⏱️
   - Recommendation logic accounts for walking time (precomputed distance matrix), a meal-eating buffer, and a safety margin — not just raw gap time.
 - **Cancelled-class handling** — mark a class cancelled for the day and the whole day's plan recalculates.
-- **AI chat, scoped tightly to campus logistics** — powered by Groq (Llama 3.3 70B), grounded in your real schedule/hostel/distance data so it doesn't hallucinate campus specifics. Deliberately restricted: no homework help, no campus-controversy discussion, no medical/relationship advice, and a dedicated (non-refusing) path for genuine mental health distress that points to VIT Bhopal's real counselling resources and crisis helplines.
+- **AI chat, scoped tightly to campus logistics** — powered by Groq (Llama 3.3 70B), grounded in your real schedule/hostel/distance data so it doesn't hallucinate campus specifics. 
 - **Profile** — photo, hostel block (editable), and quick access to edit your timetable.
 - **Dark, departures-board-inspired UI** — monospace time/data display, color-coded recommendation cards, one consistent accent color throughout.
 
