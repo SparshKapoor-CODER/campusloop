@@ -2,8 +2,6 @@
   <img src="assets/icon.png" width="300" />
 </p>
 
-
-
 # CampusLoop
 
 A location- and time-aware campus companion app for VIT Bhopal students, built in Flutter.
@@ -17,6 +15,13 @@ CampusLoop knows your FFCS timetable, the walking distance between every buildin
   <img src="screenshots/chat.png" width="200" />
 </p>
  -->
+
+## Download (VIT Bhopal students)
+
+1. Go to the [Releases page](../../releases) of this repo
+2. Download the latest `.apk` file under **Assets**
+3. Open the downloaded file on your phone. If Android blocks it ("Install blocked" / "Unknown sources"), tap **Settings** in that prompt and allow installs from the app you downloaded it with (Chrome, Files, etc.) — this is a one-time Android permission, not specific to CampusLoop
+4. Install and open. No login needed — just register with your name, gender, and hostel block
 
 ## Features
 
@@ -38,7 +43,7 @@ CampusLoop knows your FFCS timetable, the walking distance between every buildin
 - **Firebase**
   - Firestore — student data, campus location data, precomputed distance matrix, mess timings
   - Anonymous Authentication — no email/password, one identity per device install
-- **Groq API** (Llama 3.3 70B) — chat assistant
+- **Groq API** (Llama 3.3 70B) — chat assistant, called through a **Cloudflare Worker proxy** (see Security below) rather than directly from the app
 - **Google Maps Distance Matrix API** — used once, offline, to precompute walking times between every campus location (not called at runtime)
 
 ## Architecture / Data Model
@@ -63,7 +68,10 @@ messTimings/default               (read-only, seeded once)
   breakfastStart/End, lunchStart/End, eveningsnacksStart/End, dinnerStart/End
 ```
 
-Firestore security rules restrict every student to reading/writing only their own `students/{uid}` document and subcollections; campus-wide data (locations, distances, mess timings) is read-only for clients and only written by an offline seeding script using a service account.
+## Security
+
+- **Firestore rules** restrict every student to reading/writing only their own `students/{uid}` document and subcollections. Campus-wide data (locations, distances, mess timings) is read-only for clients and only written by an offline seeding script using a service account.
+- **The Groq API key never ships in the app.** Chat requests go from the phone to a small [Cloudflare Worker](https://workers.cloudflare.com/) proxy, which verifies the caller has a real, currently-valid Firebase session before forwarding the request to Groq with the key it holds server-side. The key is never embedded in the APK or visible in network traffic from the client.
 
 ## Running This Yourself
 
@@ -73,10 +81,11 @@ This repo doesn't ship with a live Firebase/Groq backend — you'll need your ow
 2. Create a Firebase project, enable **Firestore** and **Anonymous Authentication**
 3. Run `flutterfire configure` to generate `lib/firebase_options.dart`
 4. Seed `campusLocations`, `distanceMatrix`, and `messTimings` for your own campus (see the one-time Python seeding script — requires a Google Maps Distance Matrix API key)
-5. Create `lib/groq_config.dart`:
-   ```dart
-   const String groqApiKey = 'YOUR_GROQ_API_KEY';
-   ```
+5. Deploy your own Cloudflare Worker proxy for Groq (free tier, no card required):
+   - `npm create cloudflare@latest` → Worker only, JavaScript
+   - Set secrets: `wrangler secret put GROQ_API_KEY` and `wrangler secret put FIREBASE_WEB_API_KEY` (the latter is your Firebase project's public web API key, found in `firebase_options.dart`)
+   - Deploy with `npm run deploy`, copy the resulting `*.workers.dev` URL
+   - Update the `_endpoint` constant in `lib/groq_service.dart` to point at your Worker URL
 6. `flutter run`
 
 The slot grid and building/hostel/canteen data are currently hardcoded for **VIT Bhopal** specifically — adapting this to another campus means updating `slot_data.dart`, `campus_data.dart`, `hostel_data.dart`, and reseeding the Firestore data.
@@ -93,4 +102,4 @@ The FFCS timetable slot-grid concept is adapted from [FFCS-VITB-Maker](https://g
 
 ---
 
-Made by [**Sparsh Kapoor**](https://github.com/SparshKapoor-CODER)— [LinkedIn](https://www.linkedin.com/in/sparsh-kapoor-sk/)
+Made by [**Sparsh Kapoor**](https://github.com/SparshKapoor-CODER) — [LinkedIn](https://www.linkedin.com/in/sparsh-kapoor-sk/)
