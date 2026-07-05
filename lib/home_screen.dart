@@ -44,6 +44,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _locId(String name) => name.replaceAll(' ', '_');
 
+  // Decodes the saved profile photo defensively — if the stored base64 is
+  // ever malformed, this returns null (fallback icon) instead of failing
+  // silently and leaving a blank circle in the app bar.
+  MemoryImage? _decodeAvatar(String? base64Str) {
+    if (base64Str == null || base64Str.isEmpty) return null;
+    try {
+      return MemoryImage(base64Decode(base64Str));
+    } catch (_) {
+      return null;
+    }
+  }
+
   DateTime _todayAt(String hhmm) {
     final now = DateTime.now();
     final parts = hhmm.split(':');
@@ -64,17 +76,8 @@ class _HomeScreenState extends State<HomeScreen> {
       final now = DateTime.now();
       final weekdayIndex = now.weekday; // Mon=1 .. Sun=7
 
-      if (weekdayIndex == 7) {
-        setState(() {
-          _noClassesToday = true;
-          _loading = false;
-        });
-        return;
-      }
-
-      final dayName = _weekDays[weekdayIndex - 1];
-
-      // ---- student profile ----
+      // ---- student profile (fetched first, always — needed for the avatar
+      // and hostel regardless of whether today has classes) ----
       final studentDoc = await FirebaseFirestore.instance
           .collection('students')
           .doc(_uid)
@@ -82,6 +85,18 @@ class _HomeScreenState extends State<HomeScreen> {
       final hostelBlock = studentDoc.data()?['hostelBlock'] as String?;
       final hostelId = hostelBlock != null ? _locId(hostelBlock) : null;
       final photoBase64 = studentDoc.data()?['photoBase64'] as String?;
+
+      if (weekdayIndex == 7) {
+        setState(() {
+          _hostelId = hostelId;
+          _photoBase64 = photoBase64;
+          _noClassesToday = true;
+          _loading = false;
+        });
+        return;
+      }
+
+      final dayName = _weekDays[weekdayIndex - 1];
 
       // ---- today's cancellations ----
       final cancelDoc = await FirebaseFirestore.instance
@@ -291,25 +306,27 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
           ),
-          IconButton(
-            icon: CircleAvatar(
-              radius: 14,
-              backgroundColor: AppColors.surfaceHigh,
-              backgroundImage:
-                  _photoBase64 != null ? MemoryImage(base64Decode(_photoBase64!)) : null,
-              child: _photoBase64 == null
-                  ? const Icon(Icons.person_outline, size: 18, color: AppColors.textSecondary)
-                  : null,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                );
+                // Photo or hostel may have changed — refresh so the avatar and
+                // recommendation logic reflect the latest data.
+                _loadEverything();
+              },
+              child: CircleAvatar(
+                radius: 16,
+                backgroundColor: AppColors.surfaceHigh,
+                backgroundImage: _decodeAvatar(_photoBase64),
+                child: _decodeAvatar(_photoBase64) == null
+                    ? const Icon(Icons.person_outline, size: 18, color: AppColors.textSecondary)
+                    : null,
+              ),
             ),
-            tooltip: 'Profile',
-            onPressed: () async {
-              await Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ProfileScreen()),
-              );
-              // Photo or hostel may have changed — refresh so the avatar and
-              // recommendation logic reflect the latest data.
-              _loadEverything();
-            },
           ),
         ],
       ),
@@ -359,7 +376,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: _todaySlotsWithCancelledIncluded(),
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 40),
         const MadeByCredit(),
       ],
     );
