@@ -8,13 +8,13 @@ A location- and time-aware campus companion app for VIT Bhopal students, built i
 
 CampusLoop knows your FFCS timetable, the walking distance between every building/hostel/canteen on campus, and the hostel mess timings — and uses that to answer the question every hosteller asks between classes: **"Do I have time to go back, eat, and get to my next class?"**
 
-<!-- 
+
 <p float="left">
   <img src="screenshots/home.png" width="200" />
   <img src="screenshots/timetable.png" width="200" />
   <img src="screenshots/chat.png" width="200" />
 </p>
- -->
+
 
 ## Download (VIT Bhopal students)
 
