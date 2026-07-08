@@ -90,7 +90,7 @@ This repo doesn't ship with a live Firebase/Groq backend — you'll need your ow
 
 The slot grid and building/hostel/canteen data are currently hardcoded for **VIT Bhopal** specifically — adapting this to another campus means updating `slot_data.dart`, `campus_data.dart`, `hostel_data.dart`, and reseeding the Firestore data.
 
-## Known Limitations / Roadmap
+## Known Limitations / Roadmap 
 
 - Assignment/deadline tracking and club/sports event integration are planned but not yet built.
 - No push notifications yet (recommendations only update when the app is open).
